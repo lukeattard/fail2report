@@ -1,0 +1,143 @@
+#!/bin/bash
+
+
+function help {
+	printf "fail2report - Quick reporting on the Source of failed logins based on fail2ban logs \n\n"
+	printf "usage: fail2report update 		updates the db based on the current fail2ban (/var/log/fail2ban.log)\n"
+	printf "or:    fail2report load [log file]  	reloads the database based on the log file entered, if no log file, defaults to /var/log/fail2ban.log \n"
+	printf "or:    fail2report full 		Sends to standard out a list of all the IP's, and their origin and a summary of the countries of origin\n"
+	printf "or:    fail2report summary 		Sends to standard out a summary of the country of origin\n"
+	printf "or:    fail2report iplist 		Sends to standard out a list of all ips that have had a failed login \n"
+	printf "or:    fail2report ip [ip address]	ip address 4.2.2.1 must be full address at this point in time \n"
+	printf "or:    fail2report country [country]    Country name Must be full name at this point of time \n\n"
+	printf "or:    fail2report --help 		This help\n\n"
+	printf "Will be adding a basic html page for output to a webserver. \n "
+
+}
+
+function iplist {
+
+	awk 'BEGIN { teststr = "/."; IP = "IP"; Country = "Country"; foundip = "foundip"; banip = "banip"; unban = "unban";  } /has/{  
+		split(FILENAME, shortname, "/", seps)
+		gsub(".db","",shortname[5])
+		action = substr(shortname[5],2)
+		fromIp[$1][IP] = $1
+		if (action == "foundip")
+		{
+			if (NF == 9)
+			{
+				$3 = $3" "$4
+				$5 = $6
+			}
+			fromIp[$1][foundip] = $5
+		} 
+		else if (action == "banip")
+		{
+			
+			if (NF == 9)
+			{
+				$3 = $3" "$4
+				$7 = $8
+			}
+			fromIp[$1][banip] = $7
+		} 
+		else if (action == "unban")
+		{
+
+			if (NF == 9)
+			{
+				$3 = $3" "$4
+				$7 = $8
+			}
+			fromIp[$1][unban] = $7
+		} 
+		fromIp[$1][Country] = $3
+	} END {
+		for (i in fromIp){
+			printf "%-15s from  %-20s has attempted: %-6s been banned: %-6s and unbanned: %-6s \n", fromIp[i][IP], fromIp[i][Country], fromIp[i][foundip], fromIp[i][banip], fromIp[i][unban]
+		}
+	}' /usr/lib/fail2report/.*.db
+}
+
+function countrysummary {
+	
+	awk 'BEGIN { FS = ","; } /banip/{	coo[$2]["Country"] = $2; coo[$2]["banip"] = $3 }
+			   /foundip/{   coo[$2]["Country"] = $2; coo[$2]["foundip"] = $3 }
+			   /unban/{   coo[$2]["Country"] = $2; coo[$2]["unban"] = $3 }
+	     END {
+			for (i in coo) {
+				printf "IPs from %-20s have attempted: %-6s been banned: %-6s and unbanned: %-6s \n", coo[i]["Country"], coo[i]["foundip"], coo[i]["banip"], coo[i]["unban"]
+			}
+		}' /usr/lib/fail2report/.*.summary  
+
+}
+
+banipdb='/usr/lib/fail2report/.banip.db'
+foundipdb='/usr/lib/fail2report/.foundip.db'
+unbanipdb='/usr/lib/fail2report/.unbanip.db'
+
+if [[ $1 == 'update' ]]; then
+	printf "Updating database from the current log file.  Please wait \n"
+	awk -f /usr/lib/fail2report/BanIP.awk /var/log/fail2ban.log > /usr/lib/fail2report/.banip.db &
+	awk -f /usr/lib/fail2report/FoundIP.awk /var/log/fail2ban.log > /usr/lib/fail2report/.foundip.db &
+	awk -f /usr/lib/fail2report/UnbanIP.awk /var/log/fail2ban.log > /usr/lib/fail2report/.unbanip.db &
+	wait
+	printf "Database updated with the current log of fail2ban\n\n"
+
+elif [[ $1 == 'load' ]]; then
+	if [[ -z "$2" ]]; then
+		ARG2="/var/log/fail2ban.log"
+	else
+		ARG2=$2
+	fi 
+	printf "Updating database from %s.  Please wait \n" $ARG2
+	awk -f /usr/lib/fail2report/BanIP.awk $ARG2 > /usr/lib/fail2report/.banip.db &
+	awk -f /usr/lib/fail2report/FoundIP.awk $ARG2 > /usr/lib/fail2report/.foundip.db &
+	awk -f /usr/lib/fail2report/UnbanIP.awk $ARG2 > /usr/lib/fail2report/.unbanip.db &
+	wait
+	printf "Database updated from log %s\n\n" $ARG2
+
+elif [[ $1 == 'full' ]]; then
+
+	printf "Full Report:  \n\n"
+	printf "List of Ip's and actions:\n\n"
+	iplist
+	printf "\n\nSummary of Country of Origin:\n\n"
+	countrysummary
+	
+elif [[ $1 == 'iplist' ]]; then
+
+	printf "List of all IP that have had a failed login attempt in the current log file loaded:\n\n"
+	iplist	
+
+elif [[ $1 == 'summary' ]]; then
+
+	printf "Summary of Country of Origin for failed login attempts:\n\n"
+	countrysummary
+	 
+elif [[ $1 == 'ip' ]]; then 
+
+	from=$(grep $2 $foundipdb | grep -o -P '(?<=from).*(?=has:)')
+	printf "%s from %s has: \n\n" $2 $from
+	grep $2 $foundipdb | awk 'BEGIN{ FS=":"; } { printf "%.4s attempts where no actions was taken \n", $2}'
+	grep $2 $banipdb | awk 'BEGIN{ FS=":"; } { printf "%.4s attempts resulted in a ban \n", $2}'
+	grep $2 $unbanipdb | awk 'BEGIN{ FS=":"; } { printf "%.4s times the ip was unabnned \n", $2}'
+
+elif [[ $1 == 'country' ]]; then
+
+	grep $2 $foundipdb
+	grep $2 $banipdb
+	grep $2 $unbanipdb
+
+elif [[ $1 == '--help' ]]; then
+
+	help
+
+else
+
+	help
+fi
+
+
+
+
