@@ -15,62 +15,6 @@ function help {
 
 }
 
-function iplist {
-
-	awk 'BEGIN { teststr = "/."; IP = "IP"; Country = "Country"; foundip = "foundip"; banip = "banip"; unban = "unban";  } /has/{  
-		split(FILENAME, shortname, "/", seps)
-		gsub(".db","",shortname[5])
-		action = substr(shortname[5],2)
-		fromIp[$1][IP] = $1
-		if (action == "foundip")
-		{
-			if (NF > 8)
-			{
-				x = NF - 8
-				y = 0
-				countryspan = $3
-				while (y < x)
-				{
-					cmd = "$countryspan $"(y + 4) 
-					cmd | getline countryspan
-					y ++
-				} 	
-				close(cmd)
-				cmd = "$"x + 5
-				cmd | getline ARG5 
-				close(cmd)			
-				$5 = ARG5
-			}
-			fromIp[$1][foundip] = $5
-		} 
-		elsettar if (action == "banip")
-		{
-			
-			if (NF == 9)
-			{
-				$3 = $3" "$4
-				$7 = $8
-			}
-			fromIp[$1][banip] = $7
-		} 
-		else if (action == "unban")
-		{
-
-			if (NF == 9)
-			{
-				$3 = $3" "$4
-				$7 = $8
-			}
-			fromIp[$1][unban] = $7
-		} 
-		fromIp[$1][Country] = $3
-	} END {
-		for (i in fromIp){
-			printf "%-15s from  %-20s has attempted: %-6s been banned: %-6s and unbanned: %-6s \n", fromIp[i][IP], fromIp[i][Country], fromIp[i][foundip], fromIp[i][banip], fromIp[i][unban]
-		}
-	}' /usr/lib/fail2report/.*.db
-}
-
 function countrysummary {
 	
 	awk 'BEGIN{ FS=","; } /from/{ fromtime=$2; fromdate=$3 } /to/{ totime=$2; todate=$3 } END{ printf "Report from %s, %s to %s, %s \n\n", fromtime, fromdate, totime, todate }' /usr/lib/fail2report/.reporttimes 

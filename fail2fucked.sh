@@ -15,10 +15,52 @@ function help {
 
 }
 
+function iplist {
+
+	awk 'BEGIN { teststr = "/."; IP = "IP"; Country = "Country"; foundip = "foundip"; banip = "banip"; unban = "unban";  } /has/{  
+		split(FILENAME, shortname, "/", seps)
+		gsub(".db","",shortname[5])
+		action = substr(shortname[5],2)
+		fromIp[$1][IP] = $1
+		if (action == "foundip")
+		{
+			if (NF == 9)
+			{
+				$3 = $3" "$4
+				$5 = $6
+			}
+			fromIp[$1][foundip] = $5
+		} 
+		else if (action == "banip")
+		{
+			
+			if (NF == 9)
+			{
+				$3 = $3" "$4
+				$7 = $8
+			}
+			fromIp[$1][banip] = $7
+		} 
+		else if (action == "unban")
+		{
+
+			if (NF == 9)
+			{
+				$3 = $3" "$4
+				$7 = $8
+			}
+			fromIp[$1][unban] = $7
+		} 
+		fromIp[$1][Country] = $3
+	} END {
+		for (i in fromIp){
+			printf "%-15s from  %-20s has attempted: %-6s been banned: %-6s and unbanned: %-6s \n", fromIp[i][IP], fromIp[i][Country], fromIp[i][foundip], fromIp[i][banip], fromIp[i][unban]
+		}
+	}' /usr/lib/fail2report/.*.db
+}
+
 function countrysummary {
 	
-	awk 'BEGIN{ FS=","; } /from/{ fromtime=$2; fromdate=$3 } /to/{ totime=$2; todate=$3 } END{ printf "Report from %s, %s to %s, %s \n\n", fromtime, fromdate, totime, todate }' /usr/lib/fail2report/.reporttimes 
-	printf "Summary of IPs by Country: \n\n"
 	awk 'BEGIN { FS = ","; } /banip/{	coo[$2]["Country"] = $2; coo[$2]["banip"] = $3 }
 			   /foundip/{   coo[$2]["Country"] = $2; coo[$2]["foundip"] = $3 }
 			   /unban/{   coo[$2]["Country"] = $2; coo[$2]["unban"] = $3 }
@@ -28,20 +70,6 @@ function countrysummary {
 			}
 		}' /usr/lib/fail2report/.*.summary  
 
-}
-
-function ipsummary {
-	
-	awk 'BEGIN{ FS=","; } /from/{ fromtime=$2; fromdate=$3 } /to/{ totime=$2; todate=$3 } END{ printf "Report from %s, %s to %s, %s \n\n", fromtime, fromdate, totime, todate }' /usr/lib/fail2report/.reporttimes 
-	printf "List of all IP that have had a failed login attempt in the current log file loaded:\n\n"
-	awk 'BEGIN { FS = ","; } /banip/{	coo[$2]["IP"] = $2; coo[$2]["Country"] = $3; coo[$2]["banip"] = $4 }
-			   /foundip/{   coo[$2]["IP"] = $2; ccoo[$2]["Country"]; coo[$2]["foundip"] = $4 }
-			   /unban/{   coo[$2]["IP"] = $2; ccoo[$2]["Country"]; coo[$2]["unban"] = $4 }
-	     END {
-			for (i in coo) {
-				printf "IP %-15s from %-20s have attempted: %-6s been banned: %-6s and unbanned: %-6s \n", coo[i]["IP"], coo[i]["Country"], coo[i]["foundip"], coo[i]["banip"], coo[i]["unban"]
-			}
-		}' /usr/lib/fail2report/.*.db
 }
 
 banipdb='/usr/lib/fail2report/.banip.db'
@@ -72,15 +100,19 @@ elif [[ $1 == 'load' ]]; then
 elif [[ $1 == 'full' ]]; then
 
 	printf "Full Report:  \n\n"
-	ipsummary
+	printf "List of Ip's and actions:\n\n"
+	iplist
+	printf "\n\nSummary of Country of Origin:\n\n"
 	countrysummary
 	
 elif [[ $1 == 'iplist' ]]; then
 
-	ipsummary 
+	printf "List of all IP that have had a failed login attempt in the current log file loaded:\n\n"
+	iplist	
 
 elif [[ $1 == 'summary' ]]; then
 
+	printf "Summary of Country of Origin for failed login attempts:\n\n"
 	countrysummary
 	 
 elif [[ $1 == 'ip' ]]; then 
