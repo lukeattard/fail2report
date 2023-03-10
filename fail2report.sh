@@ -23,9 +23,19 @@ function countrysummary {
 			   /foundip/{   coo[$2]["Country"] = $2; coo[$2]["foundip"] = $3 }
 			   /unban/{   coo[$2]["Country"] = $2; coo[$2]["unban"] = $3 }
 	     END {
+	     		 totalban = 0;
+                        totalunban = 0;
+                        totalfound = 0;
+
 			for (i in coo) {
 				printf "IPs from %-20s have attempted: %-6s been banned: %-6s and unbanned: %-6s \n", coo[i]["Country"], coo[i]["foundip"], coo[i]["banip"], coo[i]["unban"]
+				totalban = totalban + coo[i]["banip"];
+                                totalunban = totalunban + coo[i]["unban"];
+                                totalfound = totalfound + coo[i]["foundip"];
 			}
+                        printf "\n"
+                        printf "Total                             Attempts:  %-6s been Banned:  %-6s and Unbanned:  %-6s \n\n", totalfound, totalban, totalunban;
+
 		}' /usr/lib/fail2report/.*.summary  
 
 }
@@ -38,9 +48,17 @@ function ipsummary {
 			   /foundip/{   coo[$2]["IP"] = $2; ccoo[$2]["Country"] = $3; coo[$2]["foundip"] = $4 }
 			   /unban/{   coo[$2]["IP"] = $2; ccoo[$2]["Country"] = $3; coo[$2]["unban"] = $4 }
 	     END {
+	     		totalban = 0;
+			totalunban = 0;
+			totalfound = 0;
 			for (i in coo) {
-				printf "IP %-15s from %-20s have attempted: %-6s been banned: %-6s and unbanned: %-6s \n", coo[i]["IP"], coo[i]["Country"], coo[i]["foundip"], coo[i]["banip"], coo[i]["unban"]
+				printf "IP %-15s from: %-20s have Attempted: %-6s been Banned: %-6s and Unbanned: %-6s \n", coo[i]["IP"], coo[i]["Country"], coo[i]["foundip"], coo[i]["banip"], coo[i]["unban"];
+				totalban = totalban + coo[i]["banip"];
+				totalunban = totalunban + coo[i]["unban"];
+				totalfound = totalfound + coo[i]["foundip"];
 			}
+			printf "\n"
+			printf "Total                                                 Attempts:  %-6s been Banned:  %-6s and Unbanned:  %-6s \n\n", totalfound, totalban, totalunban;
 		}' /usr/lib/fail2report/.*.db
 }
 
@@ -71,17 +89,23 @@ elif [[ $1 == 'load' ]]; then
 
 elif [[ $1 == 'full' ]]; then
 
-	printf "Full Report:  \n\n"
+	printf "Full Report:  \n"
 	ipsummary
+	printf "\n"
 	countrysummary
+	printf "\n"
 	
 elif [[ $1 == 'iplist' ]]; then
 
+	printf "\n\n"
 	ipsummary 
+	printf "\n\n"
 
 elif [[ $1 == 'summary' ]]; then
 
+	printf "\n\n"
 	countrysummary
+	printf "\n\n"
 	 
 elif [[ $1 == 'ip' ]]; then 
 
