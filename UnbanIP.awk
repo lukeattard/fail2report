@@ -18,7 +18,7 @@ BEGIN {
 }
 END {
 	for (i in ip){
-		printf "%-15s from %-20s has been unbanned: %-6s times\n", i, ipCountry[i], ip[i] > outDb
+		printf "unban, %-15s, %-20s, %-6s, times\n", i, ipCountry[i], ip[i] > outDb
 		}
 
 	asorti(fcArray,fcSorted)

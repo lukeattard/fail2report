@@ -23,7 +23,7 @@ END {
 	print "Summary of Country of origin for failed logon attempts: \n \n" > outDb
 	printf "Report from %.8s %s to %.8s %s\n\n", fromTime, fromDate, $2, $1 >> outDb
 	for (i in ip){
-		printf "%-15s from %-20s has: %-6s failed login attempts\n", i, ipCountry[i], ip[i] >> outDb
+		printf "foundip, %-15s, %-20s, %-6s, failed login attempts\n", i, ipCountry[i], ip[i] >> outDb
 		}
 
 #	print "\n \n Summary of Countries have come from: \n \n" > outSummary

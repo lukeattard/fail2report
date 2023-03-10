@@ -18,7 +18,7 @@ BEGIN {
 END {
 	print "Summary of Country of origin for failed login attempts: \n \n" > outDb
 	for (i in ip){
-		printf "%-15s from %-20s has been banned: %-6s times\n", i, ipCountry[i], ip[i] >> outDb 
+		printf "banip, %-15s, %-20s, %-6s, times\n", i, ipCountry[i], ip[i] >> outDb 
 		}
 	close(outDb)
 	print "\n \n Summary of Countries have come from: \n \n" > outSummary

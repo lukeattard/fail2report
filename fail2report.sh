@@ -35,8 +35,8 @@ function ipsummary {
 	awk 'BEGIN{ FS=","; } /from/{ fromtime=$2; fromdate=$3 } /to/{ totime=$2; todate=$3 } END{ printf "Report from %s, %s to %s, %s \n\n", fromtime, fromdate, totime, todate }' /usr/lib/fail2report/.reporttimes 
 	printf "List of all IP that have had a failed login attempt in the current log file loaded:\n\n"
 	awk 'BEGIN { FS = ","; } /banip/{	coo[$2]["IP"] = $2; coo[$2]["Country"] = $3; coo[$2]["banip"] = $4 }
-			   /foundip/{   coo[$2]["IP"] = $2; ccoo[$2]["Country"]; coo[$2]["foundip"] = $4 }
-			   /unban/{   coo[$2]["IP"] = $2; ccoo[$2]["Country"]; coo[$2]["unban"] = $4 }
+			   /foundip/{   coo[$2]["IP"] = $2; ccoo[$2]["Country"] = $3; coo[$2]["foundip"] = $4 }
+			   /unban/{   coo[$2]["IP"] = $2; ccoo[$2]["Country"] = $3; coo[$2]["unban"] = $4 }
 	     END {
 			for (i in coo) {
 				printf "IP %-15s from %-20s have attempted: %-6s been banned: %-6s and unbanned: %-6s \n", coo[i]["IP"], coo[i]["Country"], coo[i]["foundip"], coo[i]["banip"], coo[i]["unban"]
