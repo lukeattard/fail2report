@@ -20,8 +20,8 @@ function countrysummary {
 	awk 'BEGIN{ FS=","; } /from/{ fromtime=$2; fromdate=$3 } /to/{ totime=$2; todate=$3 } END{ printf "Report from %s, %s to %s, %s \n\n", fromtime, fromdate, totime, todate }' /usr/lib/fail2report/.reporttimes 
 	printf "Summary of IPs by Country: \n\n"
 	awk 'BEGIN { FS = ","; } /banip/{	coo[$2]["Country"] = $2; coo[$2]["banip"] = $3 }
-			   /foundip/{   coo[$2]["Country"] = $2; coo[$2]["foundip"] = $3 }
 			   /unban/{   coo[$2]["Country"] = $2; coo[$2]["unban"] = $3 }
+			   /foundip/{   coo[$2]["Country"] = $2; coo[$2]["foundip"] = $3 }
 	     END {
 	     		 totalban = 0;
                         totalunban = 0;
@@ -44,9 +44,12 @@ function ipsummary {
 	
 	awk 'BEGIN{ FS=","; } /from/{ fromtime=$2; fromdate=$3 } /to/{ totime=$2; todate=$3 } END{ printf "Report from %s, %s to %s, %s \n\n", fromtime, fromdate, totime, todate }' /usr/lib/fail2report/.reporttimes 
 	printf "List of all IP that have had a failed login attempt in the current log file loaded:\n\n"
-	awk 'BEGIN { FS = ","; } /banip/{	coo[$2]["IP"] = $2; coo[$2]["Country"] = $3; coo[$2]["banip"] = $4 }
-			   /foundip/{   coo[$2]["IP"] = $2; ccoo[$2]["Country"] = $3; coo[$2]["foundip"] = $4 }
-			   /unban/{   coo[$2]["IP"] = $2; ccoo[$2]["Country"] = $3; coo[$2]["unban"] = $4 }
+	awk 'BEGIN { FS = ","; } 
+			   /foundip/{   coo[$2]["IP"] = $2; coo[$2]["Country"] = $3; coo[$2]["foundip"] = $4 }
+             #               /banip/{	coo[$2]["IP"] = $2; coo[$2]["Country"] = $3; coo[$2]["banip"] = $4 }
+	                    /banip/{  coo[$2]["banip"] = $4 }
+             #               /unban/{   coo[$2]["IP"] = $2; coo[$2]["Country"] = $3; coo[$2]["unban"] = $4 }
+	                    /unban/{  coo[$2]["unbanban"] = $4 }
 	     END {
 	     		totalban = 0;
 			totalunban = 0;
@@ -68,9 +71,9 @@ unbanipdb='/usr/lib/fail2report/.unbanip.db'
 
 if [[ $1 == 'update' ]]; then
 	printf "Updating database from the current log file.  Please wait \n"
-	awk -f /usr/lib/fail2report/BanIP.awk /var/log/fail2ban.log > /usr/lib/fail2report/.banip.db &
-	awk -f /usr/lib/fail2report/FoundIP.awk /var/log/fail2ban.log > /usr/lib/fail2report/.foundip.db &
-	awk -f /usr/lib/fail2report/UnbanIP.awk /var/log/fail2ban.log > /usr/lib/fail2report/.unbanip.db &
+	awk -f /usr/lib/fail2report/BanIP.awk /var/log/fail2ban.log* > /usr/lib/fail2report/.banip.db &
+	awk -f /usr/lib/fail2report/FoundIP.awk /var/log/fail2ban.log* > /usr/lib/fail2report/.foundip.db &
+	awk -f /usr/lib/fail2report/UnbanIP.awk /var/log/fail2ban.log* > /usr/lib/fail2report/.unbanip.db &
 	wait
 	printf "Database updated with the current log of fail2ban\n\n"
 

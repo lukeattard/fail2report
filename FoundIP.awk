@@ -4,7 +4,6 @@ BEGIN {
 	fromTime = $2
 	outDb = "/usr/lib/fail2report/.foundip.db"
 	outSummary = "/usr/lib/fail2report/.foundip.summary"
-	print "Summary of IP source Countries for failed logon attempts: \n \n"
 	intDF=": "
 }
 /Found/{
