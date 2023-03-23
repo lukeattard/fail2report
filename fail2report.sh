@@ -49,7 +49,7 @@ function ipsummary {
              #               /banip/{	coo[$2]["IP"] = $2; coo[$2]["Country"] = $3; coo[$2]["banip"] = $4 }
 	                    /banip/{  coo[$2]["banip"] = $4 }
              #               /unban/{   coo[$2]["IP"] = $2; coo[$2]["Country"] = $3; coo[$2]["unban"] = $4 }
-	                    /unban/{  coo[$2]["unbanban"] = $4 }
+	                    /unban/{  coo[$2]["unban"] = $4 }
 	     END {
 	     		totalban = 0;
 			totalunban = 0;
